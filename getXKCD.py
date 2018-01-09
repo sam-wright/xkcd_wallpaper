@@ -4,6 +4,8 @@
 import textwrap
 import os
 import json
+import argparse
+from random import randint
 from urllib.request import Request, urlopen
 from urllib.error import  URLError
 from PIL import Image, ImageFont, ImageDraw
@@ -98,7 +100,38 @@ def get_today():
     alt_img = alt2image(alt)
 
     stitchImagesTogether(title_img, alt_img)
+    set_wallpaper()
 
+
+def get_random():
+    """
+    """
+
+    page = safe_request('https://xkcd.com/info.0.json')
+    data = json.load(page)
+
+    num = data['num']
+    rand_num = randint(0, num)
+
+    page = safe_request('https://xkcd.com/' + str(rand_num) + '/info.0.json')
+    data = json.load(page)
+
+    alt = data['alt']
+    title = data['title']
+    img_url = data['img']
+
+    img = safe_request(img_url)
+    with open('image.png', 'wb') as f:
+        f.write(img.read())
+
+    title_img = title2image(title)
+    alt_img = alt2image(alt)
+
+    stitchImagesTogether(title_img, alt_img)
+    set_wallpaper()
+
+
+def set_wallpaper():
     osString = 'gsettings set org.gnome.desktop.background picture-uri file://'\
              + os.getcwd() + '/wallpaper.png'
     os.system(osString)
@@ -106,4 +139,12 @@ def get_today():
     os.system(osString)
 
 if __name__ == '__main__':
-    get_today()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-r', '--random', action='store_true')
+
+    args = parser.parse_args()
+
+    if args.random is True:
+        get_random()
+    else:
+        get_today()
